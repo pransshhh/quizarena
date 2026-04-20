@@ -1,6 +1,8 @@
 import type { Server as HttpServer } from "node:http";
 import { type WebSocket, WebSocketServer } from "ws";
+import { dispatch } from "../router/router.js";
 import type { AppContext } from "../types/context.js";
+import { Connection } from "./connection.js";
 
 export function createWebSocketServer(httpServer: HttpServer, ctx: AppContext): WebSocketServer {
   const wss = new WebSocketServer({ noServer: true });
@@ -18,24 +20,21 @@ export function createWebSocketServer(httpServer: HttpServer, ctx: AppContext): 
   });
 
   wss.on("connection", (ws: WebSocket) => {
-    ctx.logger.info("ws connection opened");
+    const connection = new Connection(ws, ctx.logger);
+    const connLogger = connection.getLogger();
+
+    connLogger.info({ connectionId: connection.id }, "ws connection opened");
 
     ws.on("error", (err) => {
-      ctx.logger.error({ err: String(err) }, "ws socket error");
+      connLogger.error({ err: String(err) }, "ws socket error");
     });
 
     ws.on("message", (data) => {
-      try {
-        const msg = JSON.parse(data.toString());
-        const reply = { type: "echo_reply", original: msg };
-        ws.send(JSON.stringify(reply));
-      } catch {
-        ws.send(JSON.stringify({ type: "error", message: "invalid json" }));
-      }
+      void dispatch(connection, data as Buffer, ctx);
     });
 
-    ws.on("close", (code) => {
-      ctx.logger.info({ code }, "ws connection closed");
+    ws.on("close", (code, reason) => {
+      connLogger.info({ code, reason: reason.toString() }, "ws connection closed");
     });
   });
 

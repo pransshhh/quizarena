@@ -3,6 +3,7 @@ export interface Logger {
   warn(obj: object | string, msg?: string): void;
   error(obj: object | string, msg?: string): void;
   debug(obj: object | string, msg?: string): void;
+  child?(bindings: object): Logger;
 }
 
 function format(obj: object | string, msg?: string): string {
