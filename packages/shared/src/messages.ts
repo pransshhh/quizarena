@@ -1,107 +1,47 @@
-import type { ClientMessageType, ErrorCode, ServerMessageType } from "./constants.js";
-import type { LeaderboardEntry, Player, Question, RoomCode, RoomSnapshot } from "./domain.js";
+import type { z } from "zod";
+import type { ClientMessageType, ServerMessageType } from "./constants.js";
+import type {
+  clientMessageSchema,
+  createRoomSchema,
+  joinRoomSchema,
+  leaveRoomSchema,
+  startGameSchema,
+  submitAnswerSchema,
+} from "./schemas/client.js";
+import type {
+  errorSchema,
+  gameEndedSchema,
+  gameStartedSchema,
+  playerJoinedSchema,
+  playerLeftSchema,
+  questionEndedSchema,
+  questionMsgSchema,
+  roomCreatedSchema,
+  roomJoinedSchema,
+  serverMessageSchema,
+} from "./schemas/server.js";
 
 // Client → Server messages
-export interface CreateRoomMsg {
-  type: typeof ClientMessageType.CreateRoom;
-  hostName: string;
-}
+export type CreateRoomMsg = z.infer<typeof createRoomSchema>;
+export type JoinRoomMsg = z.infer<typeof joinRoomSchema>;
+export type StartGameMsg = z.infer<typeof startGameSchema>;
+export type SubmitAnswerMsg = z.infer<typeof submitAnswerSchema>;
+export type LeaveRoomMsg = z.infer<typeof leaveRoomSchema>;
 
-export interface JoinRoomMsg {
-  type: typeof ClientMessageType.JoinRoom;
-  roomCode: RoomCode;
-  playerName: string;
-}
-
-export interface StartGameMsg {
-  type: typeof ClientMessageType.StartGame;
-}
-
-export interface SubmitAnswerMsg {
-  type: typeof ClientMessageType.SubmitAnswer;
-  questionId: string;
-  answerIndex: number;
-  // Client-side timestamp for latency compensation. Server uses its own
-  // clock for scoring, but this lets us measure and log client-perceived
-  // latency for monitoring.
-  clientTimestamp: number;
-}
-
-export interface LeaveRoomMsg {
-  type: typeof ClientMessageType.LeaveRoom;
-}
-
-export type ClientMessage =
-  | CreateRoomMsg
-  | JoinRoomMsg
-  | StartGameMsg
-  | SubmitAnswerMsg
-  | LeaveRoomMsg;
+export type ClientMessage = z.infer<typeof clientMessageSchema>;
 
 // Server → Client messages
-export interface RoomCreatedMsg {
-  type: typeof ServerMessageType.RoomCreated;
-  room: RoomSnapshot;
-  youAre: Player;
-}
+export type RoomCreatedMsg = z.infer<typeof roomCreatedSchema>;
+export type RoomJoinedMsg = z.infer<typeof roomJoinedSchema>;
+export type PlayerJoinedMsg = z.infer<typeof playerJoinedSchema>;
+export type PlayerLeftMsg = z.infer<typeof playerLeftSchema>;
+export type GameStartedMsg = z.infer<typeof gameStartedSchema>;
+export type QuestionMsg = z.infer<typeof questionMsgSchema>;
+export type QuestionEndedMsg = z.infer<typeof questionEndedSchema>;
+export type GameEndedMsg = z.infer<typeof gameEndedSchema>;
+export type ErrorMsg = z.infer<typeof errorSchema>;
 
-export interface RoomJoinedMsg {
-  type: typeof ServerMessageType.RoomJoined;
-  room: RoomSnapshot;
-  youAre: Player;
-}
-
-export interface PlayerJoinedMsg {
-  type: typeof ServerMessageType.PlayerJoined;
-  player: Player;
-}
-
-export interface PlayerLeftMsg {
-  type: typeof ServerMessageType.PlayerLeft;
-  playerId: string;
-}
-
-export interface GameStartedMsg {
-  type: typeof ServerMessageType.GameStarted;
-  startsAt: number; // absolute timestamp; first question arrives at this time
-}
-
-export interface QuestionMsg {
-  type: typeof ServerMessageType.Question;
-  question: Question;
-}
-
-export interface QuestionEndedMsg {
-  type: typeof ServerMessageType.QuestionEnded;
-  questionId: string;
-  correctIndex: number;
-  leaderboard: LeaderboardEntry[];
-  // Per-question scoring breakdown for the client to animate.
-  scoreDeltas: Record<string, number>;
-}
-
-export interface GameEndedMsg {
-  type: typeof ServerMessageType.GameEnded;
-  finalLeaderboard: LeaderboardEntry[];
-  winnerId: string | null;
-}
-
-export interface ErrorMsg {
-  type: typeof ServerMessageType.Error;
-  code: ErrorCode;
-  message: string;
-}
-
-export type ServerMessage =
-  | RoomCreatedMsg
-  | RoomJoinedMsg
-  | PlayerJoinedMsg
-  | PlayerLeftMsg
-  | GameStartedMsg
-  | QuestionMsg
-  | QuestionEndedMsg
-  | GameEndedMsg
-  | ErrorMsg;
+export type ServerMessage = z.infer<typeof serverMessageSchema>;
 
 // Type helpers — let handlers narrow to a specific message type by name.
 // Used in the handler map on the server.
