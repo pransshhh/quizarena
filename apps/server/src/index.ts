@@ -12,10 +12,13 @@ function main(): void {
   const { httpServer } = createHttpServer(ctx);
   createWebSocketServer(httpServer, ctx);
 
-  httpServer.listen(env.port, env.host, () => {
-    ctx.logger.info({ port: env.port, host: env.host, env: env.nodeEnv }, "server listening");
-    ctx.logger.info(`http: http://${env.host}:${env.port}/health`);
-    ctx.logger.info(`ws:   ws://${env.host}:${env.port}/ws`);
+  httpServer.listen(env.server.port, env.server.host, () => {
+    ctx.logger.info(
+      { port: env.server.port, host: env.server.host, env: env.nodeEnv },
+      "server listening",
+    );
+    ctx.logger.info(`http: http://${env.server.host}:${env.server.port}/health`);
+    ctx.logger.info(`ws:   ws://${env.server.host}:${env.server.port}/ws`);
   });
 
   const shutdown = (signal: string) => {

@@ -1,7 +1,8 @@
-import { type ClientMessage, ErrorCode } from "@quizarena/shared";
+import { clientMessageSchema, ErrorCode } from "@quizarena/shared";
+import { handlers } from "../handlers/index.js";
+import type { Handler } from "../handlers/types.js";
 import type { AppContext } from "../types/context.js";
 import type { Connection } from "../ws/connection.js";
-import { handlers } from "./handlers.js";
 
 export async function dispatch(
   connection: Connection,
@@ -18,29 +19,19 @@ export async function dispatch(
     return;
   }
 
-  if (!parsed || typeof parsed !== "object" || !("type" in parsed)) {
-    connection.sendError(ErrorCode.InvalidMessage, "missing type field");
+  const { success, data: msg, error } = clientMessageSchema.safeParse(parsed);
+  if (!success) {
+    const message = error.issues
+      .map((issue) => `${issue.path.join(".") || "root"}: ${issue.message}`)
+      .join("; ");
+    connection.sendError(ErrorCode.InvalidMessage, message);
     return;
   }
 
-  const msg = parsed as { type: unknown };
-  if (typeof msg.type !== "string") {
-    connection.sendError(ErrorCode.InvalidMessage, "type must be a string");
-    return;
-  }
-
-  const handler = (handlers as Record<string, unknown>)[msg.type];
-  if (typeof handler !== "function") {
-    connection.sendError(ErrorCode.InvalidMessage, `unknown type: ${msg.type}`);
-    return;
-  }
+  const handler = handlers[msg.type];
 
   try {
-    await (handler as (c: Connection, m: ClientMessage, x: AppContext) => Promise<void>)(
-      connection,
-      parsed as ClientMessage,
-      ctx,
-    );
+    await (handler as Handler<typeof msg.type>)(connection, msg, ctx);
   } catch (err) {
     logger.error({ err: String(err), msgType: msg.type }, "handler threw");
     connection.sendError(ErrorCode.Internal, "internal error");
