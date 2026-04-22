@@ -1,5 +1,6 @@
 import type { Server as HttpServer } from "node:http";
 import { type WebSocket, WebSocketServer } from "ws";
+import { handlePlayerLeaving } from "../domain/room-lifecycle.js";
 import { dispatch } from "../router/router.js";
 import type { AppContext } from "../types/context.js";
 import { Connection } from "./connection.js";
@@ -35,8 +36,23 @@ export function createWebSocketServer(httpServer: HttpServer, ctx: AppContext): 
 
     ws.on("close", (code, reason) => {
       connLogger.info({ code, reason: reason.toString() }, "ws connection closed");
+      handleDisconnect(connection, ctx);
     });
   });
 
   return wss;
+}
+
+function handleDisconnect(connection: Connection, ctx: AppContext): void {
+  if (!connection.roomCode || !connection.playerId) return;
+
+  const room = ctx.rooms.get(connection.roomCode);
+  const leavingPlayerId = connection.playerId;
+
+  connection.playerId = null;
+  connection.roomCode = null;
+
+  if (!room) return;
+
+  handlePlayerLeaving(room, leavingPlayerId, "disconnect", ctx);
 }
