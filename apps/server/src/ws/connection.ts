@@ -14,7 +14,7 @@ export class Connection {
   readonly socket: WebSocket;
   private readonly logger: Logger;
   playerId: string | null = null;
-  rooCode: string | null = null;
+  roomCode: string | null = null;
 
   constructor(socket: WebSocket, logger: Logger) {
     this.id = randomUUID();

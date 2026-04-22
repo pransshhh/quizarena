@@ -1,4 +1,5 @@
 import { env } from "./config/env.js";
+import { RoomRegistry } from "./domain/room-registry.js";
 import { createHttpServer } from "./http/server.js";
 import { logger } from "./services/logger.js";
 import type { AppContext } from "./types/context.js";
@@ -7,6 +8,7 @@ import { createWebSocketServer } from "./ws/server.js";
 function main(): void {
   const ctx: AppContext = {
     logger,
+    rooms: new RoomRegistry(logger),
   };
 
   const { httpServer } = createHttpServer(ctx);
