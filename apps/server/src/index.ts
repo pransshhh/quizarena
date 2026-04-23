@@ -14,7 +14,7 @@ function main(): void {
   const ctx: AppContext = {
     logger,
     rooms: new RoomRegistry(logger),
-    questions: questions,
+    questions,
   };
 
   const { httpServer } = createHttpServer(ctx);
@@ -30,7 +30,7 @@ function main(): void {
   });
 
   questions.warmCache().catch((err) => {
-    logger.error({ err: String(err) }, "warm cache threw unexpectedly");
+    ctx.logger.error({ err: String(err) }, "warm cache threw unexpectedly");
   });
 
   const shutdown = (signal: string) => {

@@ -19,7 +19,7 @@ export class Connection {
   constructor(socket: WebSocket, logger: Logger) {
     this.id = randomUUID();
     this.socket = socket;
-    this.logger = logger.child ? logger.child({ connectionId: this.id }) : logger;
+    this.logger = logger.child({ connectionId: this.id });
   }
 
   send(message: ServerMessage): boolean {
