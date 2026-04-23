@@ -9,7 +9,7 @@ export async function dispatch(
   raw: Buffer | ArrayBuffer | Buffer[],
   ctx: AppContext,
 ): Promise<void> {
-  const logger = connection.getLogger();
+  const logger = connection.logger;
 
   let parsed: unknown;
   try {

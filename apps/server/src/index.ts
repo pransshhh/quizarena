@@ -18,7 +18,7 @@ function main(): void {
   };
 
   const { httpServer } = createHttpServer(ctx);
-  createWebSocketServer(httpServer, ctx);
+  const { stopHeartbeat } = createWebSocketServer(httpServer, ctx);
 
   httpServer.listen(env.server.port, env.server.host, () => {
     ctx.logger.info(
@@ -35,6 +35,7 @@ function main(): void {
 
   const shutdown = (signal: string) => {
     ctx.logger.info({ signal }, "shutting down");
+    stopHeartbeat();
     httpServer.close(() => {
       process.exit(0);
     });

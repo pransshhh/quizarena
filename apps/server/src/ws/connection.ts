@@ -12,14 +12,19 @@ import { safeSend } from "./safe-send.js";
 export class Connection {
   readonly id: string;
   readonly socket: WebSocket;
-  private readonly logger: Logger;
+  readonly logger: Logger;
+
   playerId: string | null = null;
   roomCode: string | null = null;
+  isAlive = true;
 
   constructor(socket: WebSocket, logger: Logger) {
     this.id = randomUUID();
     this.socket = socket;
     this.logger = logger.child({ connectionId: this.id });
+    socket.on("pong", () => {
+      this.isAlive = true;
+    });
   }
 
   send(message: ServerMessage): boolean {
@@ -40,9 +45,5 @@ export class Connection {
     } catch (err) {
       this.logger.error({ err: String(err) }, "close failed");
     }
-  }
-
-  getLogger(): Logger {
-    return this.logger;
   }
 }
