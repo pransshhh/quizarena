@@ -2,13 +2,19 @@ import { env } from "./config/env.js";
 import { RoomRegistry } from "./domain/room-registry.js";
 import { createHttpServer } from "./http/server.js";
 import { logger } from "./services/logger.js";
+import { OpenTdbClient } from "./services/opentdb-client.js";
+import { QuestionService } from "./services/question-service.js";
 import type { AppContext } from "./types/context.js";
 import { createWebSocketServer } from "./ws/server.js";
 
 function main(): void {
+  const opentdb = new OpenTdbClient(logger);
+  const questions = new QuestionService(opentdb, logger);
+
   const ctx: AppContext = {
     logger,
     rooms: new RoomRegistry(logger),
+    questions: questions,
   };
 
   const { httpServer } = createHttpServer(ctx);
@@ -21,6 +27,10 @@ function main(): void {
     );
     ctx.logger.info(`http: http://${env.server.host}:${env.server.port}/health`);
     ctx.logger.info(`ws:   ws://${env.server.host}:${env.server.port}/ws`);
+  });
+
+  questions.warmCache().catch((err) => {
+    logger.error({ err: String(err) }, "warm cache threw unexpectedly");
   });
 
   const shutdown = (signal: string) => {

@@ -13,6 +13,7 @@
     "@quizarena/typescript-config": "*",
     "@types/bun": "^1.3.12",
     "@types/express": "^5.0.6",
+    "@types/he": "^1.2.3",
     "@types/node": "^25.6.0",
     "@types/ws": "^8.18.1",
     "typescript": "5.9.2"
@@ -20,6 +21,7 @@
   "dependencies": {
     "@quizarena/shared": "*",
     "express": "^5.2.1",
+    "he": "^1.2.0",
     "ws": "^8.20.0",
     "zod": "^4.3.6"
   }
