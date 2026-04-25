@@ -16,6 +16,7 @@ export const ServerMessageType = {
   QuestionEnded: "question_ended",
   GameEnded: "game_ended",
   Error: "error",
+  ServerShutdown: "server_shutdown",
 } as const;
 
 export const CloseCode = {

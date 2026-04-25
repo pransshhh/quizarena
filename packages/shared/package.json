@@ -11,7 +11,7 @@
     "clean": "rm -rf node_modules .turbo"
   },
   "devDependencies": {
-    "@quizarena/typescript-config": "*",
+    "@quizarena/typescript-config": "workspace:*",
     "typescript": "5.9.2"
   },
   "dependencies": {

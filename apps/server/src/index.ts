@@ -1,11 +1,13 @@
 import { env } from "./config/env.js";
 import { RoomRegistry } from "./domain/room-registry.js";
 import { createHttpServer } from "./http/server.js";
+import { isShuttingDown, setupShutdown } from "./lifecycle/shutdown.js";
 import { logger } from "./services/logger.js";
 import { OpenTdbClient } from "./services/opentdb-client.js";
 import { QuestionService } from "./services/question-service.js";
 import type { AppContext } from "./types/context.js";
 import { createWebSocketServer } from "./ws/server.js";
+
 
 function main(): void {
   const opentdb = new OpenTdbClient(logger);
@@ -15,10 +17,11 @@ function main(): void {
     logger,
     rooms: new RoomRegistry(logger),
     questions,
+    isShuttingDown,
   };
 
   const { httpServer } = createHttpServer(ctx);
-  const { stopHeartbeat } = createWebSocketServer(httpServer, ctx);
+  const wsHandle = createWebSocketServer(httpServer, ctx);
 
   httpServer.listen(env.server.port, env.server.host, () => {
     ctx.logger.info(
@@ -33,16 +36,11 @@ function main(): void {
     ctx.logger.error({ err: String(err) }, "warm cache threw unexpectedly");
   });
 
-  const shutdown = (signal: string) => {
-    ctx.logger.info({ signal }, "shutting down");
-    stopHeartbeat();
-    httpServer.close(() => {
-      process.exit(0);
-    });
-  };
-
-  process.on("SIGTERM", () => shutdown("SIGTERM"));
-  process.on("SIGINT", () => shutdown("SIGINT"));
+  setupShutdown({
+    httpServer,
+    ws: wsHandle,
+    logger: ctx.logger,
+  });
 }
 
 main();

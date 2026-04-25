@@ -1,4 +1,5 @@
 import type { Server as HttpServer } from "node:http";
+import { CloseCode, ServerMessageType } from "@quizarena/shared";
 import { type WebSocket, WebSocketServer } from "ws";
 import { handlePlayerLeaving } from "../domain/room-lifecycle.js";
 import { dispatch } from "../router/router.js";
@@ -9,6 +10,9 @@ import { setupHeartbeat } from "./heartbeat.js";
 export interface WsServerHandle {
   wss: WebSocketServer;
   stopHeartbeat: () => void;
+  broadcastShutdown: (reason: string) => void;
+  close: () => Promise<void>;
+  connectionCount: () => number;
 }
 
 export function createWebSocketServer(httpServer: HttpServer, ctx: AppContext): WsServerHandle {
@@ -17,6 +21,11 @@ export function createWebSocketServer(httpServer: HttpServer, ctx: AppContext): 
   const allConnections = new Set<Connection>();
 
   httpServer.on("upgrade", (request, socket, head) => {
+    if (ctx.isShuttingDown()) {
+      socket.write("HTTP/1.1 503 Service Unavailable\r\n\r\n");
+      socket.destroy();
+      return;
+    }
     if (request.url !== "/ws") {
       socket.write("HTTP/1.1 404 Not Found\r\n\r\n");
       socket.destroy();
@@ -49,9 +58,29 @@ export function createWebSocketServer(httpServer: HttpServer, ctx: AppContext): 
     });
   });
 
+  const connectionCount = (): number => allConnections.size;
+
   const stopHeartbeat = setupHeartbeat(allConnections, ctx.logger);
 
-  return { wss, stopHeartbeat };
+  const broadcastShutdown = (reason: string): void => {
+    for (const connection of allConnections) {
+      connection.send({
+        type: ServerMessageType.ServerShutdown,
+        reason,
+      });
+      connection.close(CloseCode.ServerRestart, "server restart");
+    }
+  };
+
+  const close = (): Promise<void> =>
+    new Promise((resolve, reject) => {
+      wss.close((err) => {
+        if (err) reject(err);
+        else resolve();
+      });
+    });
+
+  return { wss, stopHeartbeat, broadcastShutdown, close, connectionCount };
 }
 
 function handleDisconnect(connection: Connection, ctx: AppContext): void {

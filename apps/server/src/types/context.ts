@@ -6,4 +6,5 @@ export interface AppContext {
   logger: Logger;
   rooms: RoomRegistry;
   questions: QuestionService;
+  isShuttingDown: () => boolean;
 }

@@ -19,6 +19,7 @@ import type {
   roomCreatedSchema,
   roomJoinedSchema,
   serverMessageSchema,
+  serverShutdownSchema,
 } from "./schemas/server.js";
 
 // Client → Server messages
@@ -40,6 +41,7 @@ export type QuestionMsg = z.infer<typeof questionMsgSchema>;
 export type QuestionEndedMsg = z.infer<typeof questionEndedSchema>;
 export type GameEndedMsg = z.infer<typeof gameEndedSchema>;
 export type ErrorMsg = z.infer<typeof errorSchema>;
+export type ServerShutdownMsg = z.infer<typeof serverShutdownSchema>;
 
 export type ServerMessage = z.infer<typeof serverMessageSchema>;
 

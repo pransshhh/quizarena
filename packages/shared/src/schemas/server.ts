@@ -90,6 +90,11 @@ export const errorSchema = z.object({
   message: z.string(),
 });
 
+export const serverShutdownSchema = z.object({
+  type: z.literal(ServerMessageType.ServerShutdown),
+  reason: z.string(),
+});
+
 export const serverMessageSchema = z.discriminatedUnion("type", [
   roomCreatedSchema,
   roomJoinedSchema,
@@ -100,4 +105,5 @@ export const serverMessageSchema = z.discriminatedUnion("type", [
   questionEndedSchema,
   gameEndedSchema,
   errorSchema,
+  serverShutdownSchema,
 ]);
